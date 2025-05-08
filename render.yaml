@@ -4,10 +4,8 @@ services:
     env: static
     nodeVersion: 16.20.0
     buildCommand: |
-      npm install --legacy-peer-deps
-      npm install @angular/cli@17.3.2 --save-dev
-      export PATH="$(npm bin):$PATH"
-      npm run build
+      chmod +x build.sh
+      ./build.sh
     staticPublishPath: dist/angular-signup-verification-boilerplate
     envVars:
       - key: NODE_ENV
