@@ -1,17 +1,12 @@
 services:
   - type: web
-    name: angular-signup-verification
+    name: angular-signup-verification-boilerplate
     env: static
-    nodeVersion: 16.20.0
-    buildCommand: |
-      chmod +x build.sh
-      ./build.sh
+    buildCommand: npm run build
     staticPublishPath: dist/angular-signup-verification-boilerplate
     envVars:
-      - key: NODE_ENV
-        value: production
-      - key: NPM_CONFIG_LEGACY_PEER_DEPS
-        value: "true"
+      - key: NODE_VERSION
+        value: 16.20.0
     routes:
       - type: rewrite
         source: /*
