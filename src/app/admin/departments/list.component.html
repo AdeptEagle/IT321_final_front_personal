@@ -5,9 +5,10 @@
     <thead>
         <tr>
             <th style="width:10%">ID</th>
-            <th style="width:30%">Name</th>
-            <th style="width:30%">Description</th>
-            <th style="width:10%">Actions</th>
+            <th style="width:25%">Name</th>
+            <th style="width:25%">Description</th>
+            <th style="width:15%" class="text-center">Employees</th>
+            <th style="width:15%">Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -15,6 +16,9 @@
             <td>{{department.id}}</td>
             <td>{{department.name}}</td>
             <td>{{department.description}}</td>
+            <td class="text-center">
+                <span class="badge badge-primary">{{getEmployeeCount(department.id)}}</span>
+            </td>
             <td style="white-space: nowrap">
                 <a routerLink="edit/{{department.id}}" class="btn btn-sm btn-primary mr-1">Edit</a>
                 <button (click)="deleteDepartment(department.id)" class="btn btn-sm btn-danger btn-delete-account" [disabled]="department.isDeleting">
@@ -24,7 +28,7 @@
             </td>
         </tr>
         <tr *ngIf="!departments">
-            <td colspan="4" class="text-center">
+            <td colspan="5" class="text-center">
                 <span class="spinner-border spinner-border-lg align-center"></span>
             </td>
         </tr>
