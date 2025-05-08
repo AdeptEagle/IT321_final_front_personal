@@ -2,7 +2,10 @@ services:
   - type: web
     name: angular-signup-verification
     env: static
-    buildCommand: chmod +x build.sh && ./build.sh
+    nodeVersion: 18.17.0
+    buildCommand: |
+      npm install --legacy-peer-deps
+      ng serve --configuration=production
     staticPublishPath: dist/angular-signup-verification-boilerplate
     routes:
       - type: rewrite
