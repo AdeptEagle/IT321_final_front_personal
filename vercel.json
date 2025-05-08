@@ -1,10 +1,21 @@
 {
-  "rewrites": [
+  "version": 2,
+  "builds": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist/angular-signup-verification-boilerplate"
+      }
     }
   ],
-  "buildCommand": "npm install --legacy-peer-deps && ng build --configuration=production",
-  "outputDirectory": "dist/angular-signup-verification-boilerplate"
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "env": {
+    "API_URL": "https://node-backend-online.onrender.com"
+  }
 } 
