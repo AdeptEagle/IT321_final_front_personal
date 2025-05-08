@@ -1,7 +1,7 @@
 import { Injectable } from "@angular/core";
 import { environment } from '@environments/environment';
 import { BehaviorSubject, Observable, throwError } from "rxjs";
-import { map, finalize, catchError } from "rxjs/operators";
+import { map, finalize, catchError, switchMap } from "rxjs/operators";
 import { Employee } from '../_models/employee'
 import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { AlertService } from './alert.service';
@@ -82,18 +82,17 @@ export class EmployeeService{
   }
 
   transferDepartment(employeeId: string, newDepartmentId: string) {
-    const updateData = {
-      departmentId: newDepartmentId
-    };
-    
-    return this.http.patch<Employee>(`${baseUrl}/${employeeId}`, updateData).pipe(
-      map(employee => {
-        this.employeeSubject.next(employee);
-        this.alertService.success('Employee successfully transferred to new department', { autoClose: false });
-        return employee;
-      }),
-      catchError(error => {
-        return this.handleError(error);
+    // First get the current employee data
+    return this.getById(employeeId).pipe(
+      switchMap(currentEmployee => {
+        // Create update data with current employee data plus new department
+        const updateData = {
+          ...currentEmployee,
+          departmentId: newDepartmentId
+        };
+        
+        // Use PUT to update the employee
+        return this.update(employeeId, updateData);
       })
     );
   }
