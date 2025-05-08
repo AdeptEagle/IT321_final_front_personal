@@ -14,8 +14,8 @@ import {
 } from '@app/_services';
 
 @Component({ templateUrl: 'add-edit.component.html' })
-export class AddEditComponent {
-  form: UntypedFormGroup;
+export class AddEditComponent implements OnInit {
+  form!: UntypedFormGroup;
   id: string;
   isAddMode: boolean;
   loading = false;
@@ -38,97 +38,113 @@ export class AddEditComponent {
     this.id = this.route.snapshot.params['id'];
     this.isAddMode = !this.id;
 
+    // Initialize form with default values
     this.form = this.formBuilder.group({
-      userId: ['', Validators.required],
-      departmentId: ['', Validators.required],
-      position: ['', Validators.required],
-      isActive: [true, Validators.required],
+      userId: ['', [Validators.required]],
+      employeeId: ['', [Validators.required]],
+      departmentId: ['', [Validators.required]],
+      position: ['', [Validators.required]],
+      hireDate: ['', [Validators.required]],
+      isActive: [true]
     });
 
-    this.departmentService.getAll().subscribe((data) => {
-      this.departments = data;
-    });
+    // Load accounts and departments
+    this.loadAccounts();
+    this.loadDepartments();
 
-
-    // edit mode
     if (!this.isAddMode) {
-      this.employeeService
-        .getById(this.id)
-        .pipe(first())
-        .subscribe((x) => {
-          this.form.patchValue(x)
-
-          this.accountService.getAll()
-            .pipe(first())
-            .subscribe((data) => {
-              const filtered = data.filter((account) => account.role === 'User' && account.isActive && !account.employee)
-              
-              console.log(x.userId)
-              const current = data.find(account => account.id === x.userId)
-              console.log(current)
-              const alreadyIncluded = filtered.some(account => account.id === x.userId)
-              console.log(alreadyIncluded)
-
-              if(current && !alreadyIncluded){
-                filtered.push(current)
-              }
-
-              this.accounts = filtered
-            })
-        });
+      this.loadEmployee();
     }
-    // add mode
-    else{
-      this.accountService.getAll()
-      .pipe(first())
-      .subscribe((data) => {
-          this.accounts = data.filter((account) => account.role === 'User' && account.isActive && !account.employee)
-      })
-    }
-
-    
-  } 
-  
-
-  get f() {
-    return this.form.controls;
   }
 
-  
+  private loadAccounts() {
+    this.accountService.getAll()
+      .pipe(first())
+      .subscribe({
+        next: (accounts) => {
+          this.accounts = accounts;
+        },
+        error: (error) => {
+          this.alertService.error(error);
+        }
+      });
+  }
+
+  private loadDepartments() {
+    this.departmentService.getAll()
+      .pipe(first())
+      .subscribe({
+        next: (departments) => {
+          this.departments = departments;
+        },
+        error: (error) => {
+          this.alertService.error(error);
+        }
+      });
+  }
+
+  private loadEmployee() {
+    this.employeeService.getById(this.id)
+      .pipe(first())
+      .subscribe({
+        next: (employee) => {
+          this.form.patchValue(employee);
+        },
+        error: (error) => {
+          this.alertService.error(error);
+        }
+      });
+  }
+
+  // convenience getter for easy access to form fields
+  get f() { return this.form.controls; }
 
   onSubmit() {
     this.submitted = true;
 
+    // reset alerts on submit
     this.alertService.clear();
 
-    if (this.form.invalid) return;
+    // stop here if form is invalid
+    if (this.form.invalid) {
+      return;
+    }
 
     this.loading = true;
-
     if (this.isAddMode) {
-      this.createAccount();
+      this.createEmployee();
     } else {
-      this.editAccount();
+      this.updateEmployee();
     }
   }
 
-  createAccount() {
-    this.employeeService
-      .create(this.form.value)
+  private createEmployee() {
+    this.employeeService.create(this.form.value)
       .pipe(first())
       .subscribe({
         next: () => {
-          this.alertService.success('Employee created successfully', {
-            keepAfterRouteChange: true,
-          });
-          this.router.navigate(['admin/employees']);
+          this.alertService.success('Employee created successfully', { keepAfterRouteChange: true });
+          this.router.navigate(['../'], { relativeTo: this.route });
         },
-        error: (error) => {
+        error: error => {
           this.alertService.error(error);
           this.loading = false;
-        },
+        }
       });
   }
 
-  editAccount() {}
+  private updateEmployee() {
+    this.employeeService.update(this.id, this.form.value)
+      .pipe(first())
+      .subscribe({
+        next: () => {
+          this.alertService.success('Update successful', { keepAfterRouteChange: true });
+          this.router.navigate(['../'], { relativeTo: this.route });
+        },
+        error: error => {
+          this.alertService.error(error);
+          this.loading = false;
+        }
+      });
+  }
 }

@@ -1,0 +1,64 @@
+<div class="card">
+    <div class="card-header">
+        <h4>{{isAddMode ? 'Add' : 'Edit'}} Workflow</h4>
+    </div>
+    <div class="card-body">
+        <form [formGroup]="form" (ngSubmit)="onSubmit()">
+            <div class="mb-3">
+                <label class="form-label">Type</label>
+                <select formControlName="type" class="form-select" [ngClass]="{ 'is-invalid': submitted && f['type'].errors }">
+                    <option value="">Select Type</option>
+                    <option value="Leave Request">Leave Request</option>
+                    <option value="Expense Claim">Expense Claim</option>
+                    <option value="Training Request">Training Request</option>
+                    <option value="Other">Other</option>
+                </select>
+                <div *ngIf="submitted && f['type'].errors" class="invalid-feedback">
+                    <div *ngIf="f['type'].errors['required']">Type is required</div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Details</label>
+                <textarea formControlName="details" class="form-control" rows="4" [ngClass]="{ 'is-invalid': submitted && f['details'].errors }"></textarea>
+                <div *ngIf="submitted && f['details'].errors" class="invalid-feedback">
+                    <div *ngIf="f['details'].errors['required']">Details are required</div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Status</label>
+                <select formControlName="status" class="form-select" [ngClass]="{ 'is-invalid': submitted && f['status'].errors }">
+                    <option value="">Select Status</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Rejected">Rejected</option>
+                </select>
+                <div *ngIf="submitted && f['status'].errors" class="invalid-feedback">
+                    <div *ngIf="f['status'].errors['required']">Status is required</div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Employee</label>
+                <select formControlName="employeeId" class="form-select" [ngClass]="{ 'is-invalid': submitted && f['employeeId'].errors }">
+                    <option value="">Select Employee</option>
+                    <option *ngFor="let employee of employees" [value]="employee.id">
+                        {{employee.employeeId}} - {{employee.account?.email}}
+                    </option>
+                </select>
+                <div *ngIf="submitted && f['employeeId'].errors" class="invalid-feedback">
+                    <div *ngIf="f['employeeId'].errors['required']">Employee is required</div>
+                </div>
+            </div>
+
+            <div class="text-end">
+                <button [disabled]="loading" class="btn btn-primary me-2">
+                    <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
+                    Save
+                </button>
+                <a routerLink=".." class="btn btn-link">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div> 

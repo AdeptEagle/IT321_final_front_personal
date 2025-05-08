@@ -1,18 +1,25 @@
 import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
 import { ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { WorkflowsRoutingModule } from './workflows-routing.module'
 import { ListComponent } from './list.component';
+import { AddEditComponent } from './add-edit.component';
 
+const routes: Routes = [
+    { path: '', component: ListComponent },
+    { path: 'add', component: AddEditComponent },
+    { path: 'edit/:id', component: AddEditComponent }
+];
 
 @NgModule({
     imports: [
         CommonModule,
         ReactiveFormsModule,
-        WorkflowsRoutingModule
+        RouterModule.forChild(routes)
     ],
     declarations: [
-        ListComponent
+        ListComponent,
+        AddEditComponent
     ]
 })
 export class WorkflowsModule { }

@@ -3,27 +3,26 @@ import { HttpRequest, HttpResponse, HttpHandler, HttpEvent, HttpInterceptor, HTT
 import { Observable, of, throwError } from 'rxjs';
 import { delay, materialize, dematerialize } from 'rxjs/operators';
 
-import { AlertService } from '@app/_services';
-import { Role } from '@app/_models';
+import { AlertService } from '../_services/alert.service';
+import { Role } from '../_models/role';
 
 // array in local storage for accounts
-
 const accountsKey = 'accountsKey';
-let accounts = JSON.parse(localStorage.getItem(accountsKey)) || [];
-// console.log('accounts: ', accounts)
+const storedAccounts = localStorage.getItem(accountsKey);
+let accounts = storedAccounts ? JSON.parse(storedAccounts) : [];
 
-// for removing the accounts key and value
-// accounts = localStorage.removeItem(accountsKey)
+const departmentKey = 'departments';
+const storedDepartments = localStorage.getItem(departmentKey);
+let departments = storedDepartments ? JSON.parse(storedDepartments) : [];
 
+const employeeKey = 'employees';
+const storedEmployees = localStorage.getItem(employeeKey);
+let employees = storedEmployees ? JSON.parse(storedEmployees) : [];
 
-const departmentKey = 'departments'
-let departments = JSON.parse(localStorage.getItem(departmentKey)) || []
-// console.log('departments: ', departments)
-
-// for removing the accounts key and value
-// departments = localStorage.removeItem(departmentKey)
-
-
+// array in local storage for workflows
+const workflowsKey = 'angular-19-verification-boilerplate-workflows';
+const storedWorkflows = localStorage.getItem(workflowsKey);
+let workflows: any[] = storedWorkflows ? JSON.parse(storedWorkflows) : [];
 
 @Injectable()
 export class FakeBackendInterceptor implements HttpInterceptor {
@@ -76,6 +75,58 @@ export class FakeBackendInterceptor implements HttpInterceptor {
                     return getById(departments, departmentKey)
                 case url.match(/\/departments\/\d+$/) && method === 'DELETE':
                     return deleteDepartment();
+                case url.endsWith('/employees') && method === 'POST':
+                    return createEmployee();
+                case url.endsWith('/employees') && method === 'GET':
+                    return getList(employees, employeeKey);
+                case url.match(/\/employees\/\d+$/) && method === 'GET':
+                    return getById(employees, employeeKey);
+                case url.match(/\/employees\/\d+$/) && method === 'PUT':
+                    return updateEmployee();
+                case url.match(/\/employees\/\d+$/) && method === 'DELETE':
+                    return deleteEmployee();
+                // Workflow endpoints
+                case url.match(/\/api\/workflows\/\d+$/) && method === 'GET':
+                    const workflowUrlParts = url.split('/');
+                    const workflowId = workflowUrlParts[workflowUrlParts.length - 1];
+                    const workflow = workflows.find(x => x.id === workflowId);
+                    if (workflow) {
+                        return ok(workflow);
+                    } else {
+                        return error('Workflow not found');
+                    }
+                case url.endsWith('/api/workflows') && method === 'GET':
+                    return ok(workflows);
+                case url.endsWith('/api/workflows') && method === 'POST':
+                    const newWorkflow = body;
+                    newWorkflow.id = workflows.length ? Math.max(...workflows.map(x => parseInt(x.id))) + 1 : 1;
+                    newWorkflow.dateCreated = new Date().toISOString();
+                    newWorkflow.dateUpdated = new Date().toISOString();
+                    workflows.push(newWorkflow);
+                    localStorage.setItem(workflowsKey, JSON.stringify(workflows));
+                    return ok(newWorkflow);
+                case url.match(/\/api\/workflows\/\d+$/) && method === 'PUT':
+                    const updateUrlParts = url.split('/');
+                    const updateId = updateUrlParts[updateUrlParts.length - 1];
+                    const params = body;
+                    const workflowToUpdate = workflows.find(x => x.id === updateId);
+                    if (!workflowToUpdate) {
+                        return error('Workflow not found');
+                    }
+                    Object.assign(workflowToUpdate, params);
+                    workflowToUpdate.dateUpdated = new Date().toISOString();
+                    localStorage.setItem(workflowsKey, JSON.stringify(workflows));
+                    return ok(workflowToUpdate);
+                case url.match(/\/api\/workflows\/\d+$/) && method === 'DELETE':
+                    const deleteUrlParts = url.split('/');
+                    const deleteId = deleteUrlParts[deleteUrlParts.length - 1];
+                    const workflowToDelete = workflows.find(x => x.id === deleteId);
+                    if (!workflowToDelete) {
+                        return error('Workflow not found');
+                    }
+                    workflows = workflows.filter(x => x.id !== deleteId);
+                    localStorage.setItem(workflowsKey, JSON.stringify(workflows));
+                    return ok();
                 default:
                     // pass through any requests not handled above
                     return next.handle(request);
@@ -399,6 +450,22 @@ export class FakeBackendInterceptor implements HttpInterceptor {
                 const { id, name, description } = list;
                 return { id, name, description };
             }
+            else if(key === 'employees'){
+                const { id, employeeId, position, userId, departmentId, hireDate, isActive } = list;
+                const account = accounts.find(x => x.id.toString() === userId);
+                const department = departments.find(x => x.id.toString() === departmentId);
+                return { 
+                    id, 
+                    employeeId,
+                    position, 
+                    userId, 
+                    departmentId, 
+                    hireDate,
+                    isActive,
+                    account: account ? basicDetails('accountsKey', account) : null,
+                    department: department ? basicDetails('departments', department) : null
+                };
+            }
         }
 
         function isAuthenticated() {
@@ -423,7 +490,7 @@ export class FakeBackendInterceptor implements HttpInterceptor {
         function currentAccount() {
             // check if jwt token is in auth header
             const authHeader = headers.get('Authorization');
-            if (!authHeader.startsWith('Bearer fake-jwt-token')) return;
+            if (!authHeader || !authHeader.startsWith('Bearer fake-jwt-token')) return;
 
             // check if token is expired
             const jwtToken = JSON.parse(atob(authHeader.split('.')[1]));
@@ -496,6 +563,60 @@ export class FakeBackendInterceptor implements HttpInterceptor {
             }
 
             return ok(basicDetails(key, list))
+        }
+
+        // employee functions
+        function createEmployee() {
+            if (!isAuthorized(Role.Admin)) return unauthorized();
+
+            const employee = body;
+            
+            // Check if user exists
+            const user = accounts.find(x => x.id.toString() === employee.userId);
+            if (!user) {
+                return error('User not found');
+            }
+            
+            // Check if user already has an employee record
+            if (employees.find(x => x.userId === employee.userId)) {
+                return error('User already has an employee record');
+            }
+
+            // Check if department exists
+            const department = departments.find(x => x.id.toString() === employee.departmentId);
+            if (!department) {
+                return error('Department not found');
+            }
+
+            // Create new employee
+            employee.id = newId(employees).toString();
+            employee.isActive = true;
+            employees.push(employee);
+            localStorage.setItem(employeeKey, JSON.stringify(employees));
+
+            // Return the created employee with account and department info
+            return ok(basicDetails('employees', employee));
+        }
+
+        function updateEmployee() {
+            if (!isAuthenticated()) return unauthorized();
+            if (!isAuthorized(Role.Admin)) return unauthorized();
+
+            let params = body;
+            let employee = employees.find(x => x.id === idFromUrl());
+
+            Object.assign(employee, params);
+            localStorage.setItem(employeeKey, JSON.stringify(employees));
+            return ok(basicDetails(employeeKey, employee));
+        }
+
+        function deleteEmployee() {
+            if (!isAuthenticated()) return unauthorized();
+            if (!isAuthorized(Role.Admin)) return unauthorized();
+
+            employees = employees.filter(x => x.id !== idFromUrl());
+            localStorage.setItem(employeeKey, JSON.stringify(employees));
+            return ok();
         }
     }
 }

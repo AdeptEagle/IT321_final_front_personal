@@ -4,47 +4,45 @@
 <table class="table table-striped">
     <thead>
         <tr>
-            <th style="width:5%">ID</th>
-            <th style="width:20%">User</th>
-            <th style="width:20%">Position</th>
-            <th style="width:20%">Department</th>
-            <th style="width:20%">Hire date</th>
-            <th style="width:20%">Status</th>
-            <th style="width:10%">Action 1</th>
-            <th style="width:10%">Action 2</th>
+            <th style="width:8%">ID</th>
+            <th style="width:12%">Employee ID</th>
+            <th style="width:18%">User</th>
+            <th style="width:15%">Position</th>
+            <th style="width:15%">Department</th>
+            <th style="width:12%">Hire Date</th>
+            <th style="width:10%">Status</th>
+            <th style="width:20%">Actions</th>
         </tr>
     </thead>
     <tbody>
         <tr *ngFor="let employee of employees">
             <td>{{employee.id}}</td>
-            <td>{{employee.account?.email || 'null testing'}}</td>
+            <td>{{employee.employeeId}}</td>
+            <td>{{employee.account?.email || 'No Account'}}</td>
             <td>{{employee.position}}</td>
             <td>{{employee.department?.name || 'No Department'}}</td>
-            <td>{{ employee.hireDate | date:'MM-dd-yyyy' }}</td>
-            <td [class.text-primary]="employee.isActive" [class.text-danger]="!employee.isActive">{{employee.isActive ? 'Active' : 'InActive' }}</td>
-            <td>
-                <div style="display: flex; flex-direction: column; gap: .5em">
-                    <a routerLink="" class="btn btn-sm btn-secondary mr-1">Request</a>
-                    <a routerLink="" class="btn btn-sm btn-success mr-1">Workflows</a>
-                </div>
+            <td>{{employee.hireDate | date:'MM/dd/yyyy'}}</td>
+            <td [class.text-primary]="employee.isActive" [class.text-danger]="!employee.isActive">
+                {{employee.isActive ? 'Active' : 'InActive' }}
             </td>
             <td>
-                <div style="display: flex; flex-direction: column; gap: .5em; align-items: center">
-                    <a routerLink="edit/{{employee.id}}" class="btn btn-sm btn-primary mr-1">Edit</a>
-                    <a routerLink="" class="btn btn-sm btn-warning mr-1">Transfer</a>
-                    <button class="btn btn-sm btn-danger btn-delete-account">
-                        <!-- <span class="spinner-border spinner-border-sm"></span> -->
-                        <span>Delete</span>
+                <div style="display: flex; gap: .5em; justify-content: flex-start; white-space: nowrap">
+                    <a routerLink="" class="btn btn-sm btn-secondary">Request</a>
+                    <a routerLink="" class="btn btn-sm btn-success">Workflow</a>
+                    <a routerLink="" class="btn btn-sm btn-info">Transfer</a>
+                    <a [routerLink]="['edit', employee.id]" class="btn btn-sm btn-primary">
+                        <i class="fas fa-pencil-alt me-1"></i>Edit
+                    </a>
+                    <button class="btn btn-sm btn-danger" (click)="deleteEmployee(employee.id)" [disabled]="isDeleting">
+                        <i class="fas fa-trash me-1"></i>Delete
                     </button>
                 </div>
             </td>
         </tr>
-
-        
-        <!-- <tr *ngIf="!departments">
-            <td colspan="4" class="text-center">
+        <tr *ngIf="!employees">
+            <td colspan="8" class="text-center">
                 <span class="spinner-border spinner-border-lg align-center"></span>
             </td>
-        </tr> -->
+        </tr>
     </tbody>
 </table>

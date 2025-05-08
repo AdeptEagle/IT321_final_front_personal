@@ -18,15 +18,28 @@ export class EmployeeService{
     return this.employeeSubject.value
   }
 
-  create(params){
-    return this.http.post(`${baseUrl}`, params)
+  create(params: any) {
+    return this.http.post<Employee>(baseUrl, params);
   }
   
   getAll(){
-    return this.http.get<Employee[]>(baseUrl)
+    return this.http.get<Employee[]>(baseUrl).pipe(
+      map(employees => {
+        console.log('Raw employees data:', employees); // Debug log
+        return employees;
+      })
+    );
   }
 
   getById(id: string){
     return this.http.get<Employee>(`${baseUrl}/${id}`)
+  }
+
+  update(id: string, params: any) {
+    return this.http.put<Employee>(`${baseUrl}/${id}`, params);
+  }
+
+  delete(id: string) {
+    return this.http.delete(`${baseUrl}/${id}`);
   }
 }
