@@ -12,12 +12,17 @@ export class AuthGuard  {
 
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
         const account = this.accountService.accountValue;
+        
+        // Allow access to login page
+        if (state.url.includes('/account/login')) {
+            return true;
+        }
+
         if (account) {
             // check if route is restricted by role
             if (route.data.roles && !route.data.roles.includes(account.role)) {
                 // role not authorized so redirect to home page
-                // this.router.navigate(['/']);
-                console.log('nigga')
+                this.router.navigate(['/']);
                 return false;
             }
 
@@ -26,7 +31,6 @@ export class AuthGuard  {
         }
 
         // not logged in so redirect to login page with the return url 
-        console.log('register')
         this.router.navigate(['/account/login'], { queryParams: { returnUrl: state.url }});
         return false;
     }

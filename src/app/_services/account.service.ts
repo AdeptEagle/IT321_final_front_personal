@@ -1,7 +1,7 @@
 ﻿import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { map, finalize, catchError } from 'rxjs/operators';
 
 import { environment } from '@environments/environment';
@@ -15,6 +15,8 @@ console.log('Base URL:', baseUrl);
 export class AccountService {
     private accountSubject: BehaviorSubject<Account | null>;
     public account: Observable<Account | null>;
+    private loadingSubject: BehaviorSubject<boolean>;
+    public loading: Observable<boolean>;
 
     constructor(
         private router: Router,
@@ -22,6 +24,8 @@ export class AccountService {
     ) {
         this.accountSubject = new BehaviorSubject<Account | null>(null);
         this.account = this.accountSubject.asObservable();
+        this.loadingSubject = new BehaviorSubject<boolean>(false);
+        this.loading = this.loadingSubject.asObservable();
     }
 
     public get accountValue(): Account | null {
@@ -29,6 +33,7 @@ export class AccountService {
     }
 
     login(email: string, password: string) {
+        this.loadingSubject.next(true);
         console.log('Attempting login with:', { email });
         return this.http.post<any>(`${baseUrl}/authenticate`, { email, password }, { 
             withCredentials: true,
@@ -43,22 +48,29 @@ export class AccountService {
                 this.startRefreshTokenTimer();
                 return account;
             }),
-            catchError(error => {
-                console.error('Login error:', error);
-                throw error;
-            })
+            catchError(this.handleError),
+            finalize(() => this.loadingSubject.next(false))
         );
     }
 
     logout() {
+        this.loadingSubject.next(true);
         console.log('Logging out...');
-        this.http.post<any>(`${baseUrl}/revoke-token`, {}, { withCredentials: true }).subscribe();
-        this.stopRefreshTokenTimer();
-        this.accountSubject.next(null);
-        this.router.navigate(['/account/login']);
+        this.http.post<any>(`${baseUrl}/revoke-token`, {}, { withCredentials: true })
+            .pipe(
+                catchError(this.handleError),
+                finalize(() => {
+                    this.loadingSubject.next(false);
+                    this.stopRefreshTokenTimer();
+                    this.accountSubject.next(null);
+                    this.router.navigate(['/account/login']);
+                })
+            )
+            .subscribe();
     }
 
     refreshToken() {
+        this.loadingSubject.next(true);
         console.log('Refreshing token...');
         return this.http.post<any>(`${baseUrl}/refresh-token`, {}, { withCredentials: true })
             .pipe(
@@ -68,12 +80,32 @@ export class AccountService {
                     this.startRefreshTokenTimer();
                     return account;
                 }),
-                catchError(error => {
-                    console.error('Token refresh error:', error);
-                    throw error;
-                })
+                catchError(this.handleError),
+                finalize(() => this.loadingSubject.next(false))
             );            
-    }           
+    }
+
+    private handleError(error: HttpErrorResponse) {
+        console.error('API Error:', error);
+        let errorMessage = 'An error occurred';
+        
+        if (error.error instanceof ErrorEvent) {
+            // Client-side error
+            errorMessage = error.error.message;
+        } else {
+            // Server-side error
+            errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
+        }
+        
+        console.error('Error details:', {
+            status: error.status,
+            statusText: error.statusText,
+            url: error.url,
+            message: errorMessage
+        });
+        
+        return throwError(() => error);
+    }
 
     register(account: Account) {
         return this.http.post(`${baseUrl}/register`, account);
