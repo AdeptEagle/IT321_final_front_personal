@@ -12,18 +12,18 @@ console.log(baseUrl)
 
 @Injectable({ providedIn: 'root' })
 export class AccountService {
-    private accountSubject: BehaviorSubject<Account>;
-    public account: Observable<Account>;
+    private accountSubject: BehaviorSubject<Account | null>;
+    public account: Observable<Account | null>;
 
     constructor(
         private router: Router,
         private http: HttpClient
     ) {
-        this.accountSubject = new BehaviorSubject<Account>(null);
+        this.accountSubject = new BehaviorSubject<Account | null>(null);
         this.account = this.accountSubject.asObservable();
     }
 
-    public get accountValue(): Account {
+    public get accountValue(): Account | null {
         return this.accountSubject.value;
     }
 
@@ -88,7 +88,7 @@ export class AccountService {
         return this.http.put(`${baseUrl}/${id}`, params)
             .pipe(map((account: any) => {
                 // update the current account if it was updated
-                if (account.id === this.accountValue.id) {
+                if (this.accountValue && account.id === this.accountValue.id) {
                     // publish updated account to subscribers
                     account = { ...this.accountValue, ...account };
                     this.accountSubject.next(account);
@@ -101,7 +101,7 @@ export class AccountService {
         return this.http.delete(`${baseUrl}/${id}`)
             .pipe(finalize(() => {
                 // auto logout if the logged in account was deleted
-                if (id === this.accountValue.id)
+                if (this.accountValue && id === this.accountValue.id)
                     this.logout();
             }));
     }
@@ -111,6 +111,8 @@ export class AccountService {
     private refreshTokenTimeout;
 
     private startRefreshTokenTimer() {
+        if (!this.accountValue?.jwtToken) return;
+        
         // parse json object from base64 encoded jwt token
         const jwtToken = JSON.parse(atob(this.accountValue.jwtToken.split('.')[1]));
 

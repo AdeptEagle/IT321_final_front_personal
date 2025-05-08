@@ -124,7 +124,7 @@ export class AddEditComponent implements OnInit {
       .subscribe({
         next: () => {
           this.alertService.success('Employee created successfully', { keepAfterRouteChange: true });
-          this.router.navigate(['../'], { relativeTo: this.route });
+          this.router.navigate(['/admin/employees']);
         },
         error: error => {
           this.alertService.error(error);
@@ -139,7 +139,7 @@ export class AddEditComponent implements OnInit {
       .subscribe({
         next: () => {
           this.alertService.success('Update successful', { keepAfterRouteChange: true });
-          this.router.navigate(['../'], { relativeTo: this.route });
+          this.router.navigate(['/admin/employees']);
         },
         error: error => {
           this.alertService.error(error);

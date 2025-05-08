@@ -9,17 +9,22 @@ const baseUrl = `${environment.apiUrl}/employees`;
 
 @Injectable({ providedIn: 'root'})
 export class EmployeeService{
-  private employeeSubject: BehaviorSubject<Employee>
-  public department: Observable<Employee>
+  private employeeSubject: BehaviorSubject<Employee | null> = new BehaviorSubject<Employee | null>(null);
+  public employee: Observable<Employee | null> = this.employeeSubject.asObservable();
   
   constructor(private http: HttpClient){ }
 
-  public get employeeValue(): Employee {
-    return this.employeeSubject.value
+  public get employeeValue(): Employee | null {
+    return this.employeeSubject.value;
   }
 
   create(params: any) {
-    return this.http.post<Employee>(baseUrl, params);
+    return this.http.post<Employee>(baseUrl, params).pipe(
+      map(employee => {
+        this.employeeSubject.next(employee);
+        return employee;
+      })
+    );
   }
   
   getAll(){
@@ -32,15 +37,31 @@ export class EmployeeService{
   }
 
   getById(id: string){
-    return this.http.get<Employee>(`${baseUrl}/${id}`)
+    return this.http.get<Employee>(`${baseUrl}/${id}`).pipe(
+      map(employee => {
+        this.employeeSubject.next(employee);
+        return employee;
+      })
+    );
   }
 
   update(id: string, params: any) {
-    return this.http.put<Employee>(`${baseUrl}/${id}`, params);
+    return this.http.put<Employee>(`${baseUrl}/${id}`, params).pipe(
+      map(employee => {
+        this.employeeSubject.next(employee);
+        return employee;
+      })
+    );
   }
 
   delete(id: string) {
-    return this.http.delete(`${baseUrl}/${id}`);
+    return this.http.delete(`${baseUrl}/${id}`).pipe(
+      finalize(() => {
+        if (this.employeeValue?.id === id) {
+          this.employeeSubject.next(null);
+        }
+      })
+    );
   }
 
   transferDepartment(employeeId: string, newDepartmentId: string) {
@@ -54,6 +75,10 @@ export class EmployeeService{
     console.log('Update data:', updateData);
     
     return this.http.patch<Employee>(`${baseUrl}/${employeeId}`, updateData).pipe(
+      map(employee => {
+        this.employeeSubject.next(employee);
+        return employee;
+      }),
       catchError(error => {
         console.error('Transfer error details:', error);
         if (error.status === 404) {

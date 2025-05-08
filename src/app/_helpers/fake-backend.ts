@@ -558,9 +558,12 @@ export class FakeBackendInterceptor implements HttpInterceptor {
         function getById(listType, key){
             if (!isAuthenticated()) return unauthorized();
             
-            let list = listType.find(x => x.id === idFromUrl())
+            const id = idFromUrl();
+            let list = listType.find(x => x.id.toString() === id.toString());
+            if (!list) return error('Item not found');
 
-            if (key === 'accountsKey' && list.id !== currentAccount().id && !isAuthorized(Role.Admin)) {
+            const currentUser = currentAccount();
+            if (key === 'accountsKey' && currentUser && list.id !== currentUser.id && !isAuthorized(Role.Admin)) {
                 return unauthorized();
             }
 
@@ -605,7 +608,9 @@ export class FakeBackendInterceptor implements HttpInterceptor {
             if (!isAuthorized(Role.Admin)) return unauthorized();
 
             let params = body;
-            let employee = employees.find(x => x.id === idFromUrl());
+            const id = idFromUrl().toString();
+            let employee = employees.find(x => x.id === id);
+            if (!employee) return error('Employee not found');
 
             Object.assign(employee, params);
             localStorage.setItem(employeeKey, JSON.stringify(employees));
