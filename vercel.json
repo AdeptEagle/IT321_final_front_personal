@@ -1,0 +1,10 @@
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "buildCommand": "npm install --legacy-peer-deps && ng build --configuration=production",
+  "outputDirectory": "dist/angular-signup-verification-boilerplate"
+} 
