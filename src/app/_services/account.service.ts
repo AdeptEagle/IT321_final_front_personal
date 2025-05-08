@@ -2,13 +2,14 @@
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { map, finalize } from 'rxjs/operators';
+import { map, finalize, catchError } from 'rxjs/operators';
 
 import { environment } from '@environments/environment';
 import { Account } from '@app/_models';
 
 const baseUrl = `${environment.apiUrl}/accounts`;
-console.log(baseUrl)
+console.log('API URL:', environment.apiUrl);
+console.log('Base URL:', baseUrl);
 
 @Injectable({ providedIn: 'root' })
 export class AccountService {
@@ -41,11 +42,16 @@ export class AccountService {
                 this.accountSubject.next(account);
                 this.startRefreshTokenTimer();
                 return account;
+            }),
+            catchError(error => {
+                console.error('Login error:', error);
+                throw error;
             })
         );
     }
 
     logout() {
+        console.log('Logging out...');
         this.http.post<any>(`${baseUrl}/revoke-token`, {}, { withCredentials: true }).subscribe();
         this.stopRefreshTokenTimer();
         this.accountSubject.next(null);
@@ -53,12 +59,20 @@ export class AccountService {
     }
 
     refreshToken() {
+        console.log('Refreshing token...');
         return this.http.post<any>(`${baseUrl}/refresh-token`, {}, { withCredentials: true })
-            .pipe(map((account) => {
-                this.accountSubject.next(account);
-                this.startRefreshTokenTimer();
-                return account;
-            }));            
+            .pipe(
+                map((account) => {
+                    console.log('Token refresh successful:', account);
+                    this.accountSubject.next(account);
+                    this.startRefreshTokenTimer();
+                    return account;
+                }),
+                catchError(error => {
+                    console.error('Token refresh error:', error);
+                    throw error;
+                })
+            );            
     }           
 
     register(account: Account) {
