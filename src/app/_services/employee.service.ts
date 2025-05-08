@@ -4,6 +4,7 @@ import { BehaviorSubject, Observable } from "rxjs";
 import { map, finalize, catchError } from "rxjs/operators";
 import { Employee } from '../_models/employee'
 import { HttpClient } from "@angular/common/http";
+import { AlertService } from './alert.service';
 
 const baseUrl = `${environment.apiUrl}/employees`;
 
@@ -12,7 +13,10 @@ export class EmployeeService{
   private employeeSubject: BehaviorSubject<Employee | null> = new BehaviorSubject<Employee | null>(null);
   public employee: Observable<Employee | null> = this.employeeSubject.asObservable();
   
-  constructor(private http: HttpClient){ }
+  constructor(
+    private http: HttpClient,
+    private alertService: AlertService
+  ) { }
 
   public get employeeValue(): Employee | null {
     return this.employeeSubject.value;
@@ -76,7 +80,9 @@ export class EmployeeService{
     
     return this.http.patch<Employee>(`${baseUrl}/${employeeId}`, updateData).pipe(
       map(employee => {
+        console.log('Transfer successful:', employee);
         this.employeeSubject.next(employee);
+        this.alertService.success('Employee successfully transferred to new department', { keepAfterRouteChange: true });
         return employee;
       }),
       catchError(error => {
@@ -85,6 +91,10 @@ export class EmployeeService{
           throw new Error('Employee not found');
         } else if (error.status === 400) {
           throw new Error('Invalid department ID');
+        } else if (error.status === 401) {
+          throw new Error('Unauthorized - Please log in again');
+        } else if (error.status === 403) {
+          throw new Error('Access denied - Admin privileges required');
         } else {
           console.error('Full error object:', error);
           throw new Error(error.error?.message || 'Failed to transfer employee. Please try again.');

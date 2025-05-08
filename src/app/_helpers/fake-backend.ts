@@ -642,11 +642,11 @@ export class FakeBackendInterceptor implements HttpInterceptor {
             if (!isAuthenticated()) return unauthorized();
             if (!isAuthorized(Role.Admin)) return unauthorized();
 
-            const employeeId = idFromUrl();
+            const employeeId = idFromUrl().toString();
             const { departmentId } = body;
 
             // Find the employee
-            const employee = employees.find(x => x.id === employeeId);
+            const employee = employees.find(x => x.id.toString() === employeeId);
             if (!employee) {
                 return error('Employee not found');
             }
