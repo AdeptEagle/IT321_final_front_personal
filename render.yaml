@@ -5,9 +5,19 @@ services:
     nodeVersion: 18.17.0
     buildCommand: |
       npm install --legacy-peer-deps
-      ng build --configuration=production
+      npm run build
+      ls -la dist/angular-signup-verification-boilerplate
     staticPublishPath: dist/angular-signup-verification-boilerplate
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NPM_CONFIG_LEGACY_PEER_DEPS
+        value: "true"
     routes:
       - type: rewrite
         source: /*
-        destination: /index.html 
+        destination: /index.html
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache 
