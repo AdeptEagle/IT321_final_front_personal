@@ -24,16 +24,17 @@ export class ListComponent implements OnInit {
   }
 
   loadEmployees() {
+    console.log('Fetching updated employee list...'); // Debug log
     this.employeeService.getAll()
       .pipe(first())  
       .subscribe({
         next: (employees) => {
-          console.log('Loaded employees:', employees); // Debug log
+          console.log('Updated employees list:', employees); // Debug log
           this.employees = employees;
         },
         error: (error) => {
-          console.error('Error loading employees:', error); // Debug log
-          this.alertService.error('Error loading employees');
+          console.error('Error fetching employees:', error); // Debug log
+          this.alertService.error('Error fetching employees');
         }
       });
   }
@@ -41,14 +42,14 @@ export class ListComponent implements OnInit {
   deleteEmployee(id: string) {
     const employee = this.employees.find(x => x.id === id);
     if (!employee) return;
-    
+
     this.isDeleting = true;
     this.employeeService.delete(id)
       .pipe(first())
       .subscribe({
         next: () => {
-          this.employees = this.employees.filter(x => x.id !== id);
           this.alertService.success('Employee deleted successfully');
+          this.loadEmployees(); // Refresh the list from the backend
         },
         error: error => {
           this.alertService.error(error?.message || 'Error deleting employee');
@@ -75,4 +76,4 @@ export class ListComponent implements OnInit {
     this.loadEmployees(); // Reload the list to show updated department
     this.closeTransferModal();
   }
-} 
+}

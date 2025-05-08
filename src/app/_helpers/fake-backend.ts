@@ -85,6 +85,8 @@ export class FakeBackendInterceptor implements HttpInterceptor {
                     return updateEmployee();
                 case url.match(/\/employees\/\d+$/) && method === 'DELETE':
                     return deleteEmployee();
+                case url.match(/\/employees\/\d+$/) && method === 'PATCH':
+                    return transferEmployee();
                 // Workflow endpoints
                 case url.match(/\/api\/workflows\/\d+$/) && method === 'GET':
                     const workflowUrlParts = url.split('/');
@@ -614,9 +616,47 @@ export class FakeBackendInterceptor implements HttpInterceptor {
             if (!isAuthenticated()) return unauthorized();
             if (!isAuthorized(Role.Admin)) return unauthorized();
 
-            employees = employees.filter(x => x.id !== idFromUrl());
+            const employeeId = idFromUrl().toString(); // Ensure ID is a string for comparison
+            console.log('Deleting employee with ID:', employeeId); // Debug log
+
+            const initialLength = employees.length;
+            employees = employees.filter(x => x.id !== employeeId);
+
+            if (employees.length === initialLength) {
+                console.error('Employee not found or already deleted:', employeeId); // Debug log
+                return error('Employee not found');
+            }
+
+            console.log('Updated employees list after deletion:', employees); // Debug log
+
             localStorage.setItem(employeeKey, JSON.stringify(employees));
             return ok();
+        }
+
+        function transferEmployee() {
+            if (!isAuthenticated()) return unauthorized();
+            if (!isAuthorized(Role.Admin)) return unauthorized();
+
+            const employeeId = idFromUrl();
+            const { departmentId } = body;
+
+            // Find the employee
+            const employee = employees.find(x => x.id === employeeId);
+            if (!employee) {
+                return error('Employee not found');
+            }
+
+            // Validate the new department
+            const department = departments.find(x => x.id.toString() === departmentId);
+            if (!department) {
+                return error('Invalid department ID');
+            }
+
+            // Update the employee's department
+            employee.departmentId = departmentId;
+            localStorage.setItem(employeeKey, JSON.stringify(employees));
+
+            return ok(basicDetails('employees', employee));
         }
     }
 }
