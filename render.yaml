@@ -6,7 +6,9 @@ services:
     staticPublishPath: dist/angular-signup-verification-boilerplate
     envVars:
       - key: NODE_VERSION
-        value: 16.20.0
+        value: 20.11.1
+      - key: NPM_CONFIG_LEGACY_PEER_DEPS
+        value: "true"
     routes:
       - type: rewrite
         source: /*
