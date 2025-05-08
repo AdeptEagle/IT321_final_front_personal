@@ -1,9 +1,9 @@
 import { Injectable } from "@angular/core";
 import { environment } from '@environments/environment';
-import { BehaviorSubject, Observable } from "rxjs";
+import { BehaviorSubject, Observable, throwError } from "rxjs";
 import { map, finalize, catchError } from "rxjs/operators";
 import { Employee } from '../_models/employee'
-import { HttpClient } from "@angular/common/http";
+import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { AlertService } from './alert.service';
 
 const baseUrl = `${environment.apiUrl}/employees`;
@@ -18,6 +18,11 @@ export class EmployeeService{
     private alertService: AlertService
   ) { }
 
+  private handleError(error: HttpErrorResponse) {
+    this.alertService.error('An error occurred', { autoClose: false });
+    return throwError('An error occurred');
+  }
+
   public get employeeValue(): Employee | null {
     return this.employeeSubject.value;
   }
@@ -26,25 +31,27 @@ export class EmployeeService{
     return this.http.post<Employee>(baseUrl, params).pipe(
       map(employee => {
         this.employeeSubject.next(employee);
+        this.alertService.success('Employee created successfully', { autoClose: false });
         return employee;
+      }),
+      catchError(error => {
+        return this.handleError(error);
       })
     );
   }
   
-  getAll(){
+  getAll() {
     return this.http.get<Employee[]>(baseUrl).pipe(
-      map(employees => {
-        console.log('Raw employees data:', employees); // Debug log
-        return employees;
+      catchError(error => {
+        return this.handleError(error);
       })
     );
   }
 
-  getById(id: string){
+  getById(id: string) {
     return this.http.get<Employee>(`${baseUrl}/${id}`).pipe(
-      map(employee => {
-        this.employeeSubject.next(employee);
-        return employee;
+      catchError(error => {
+        return this.handleError(error);
       })
     );
   }
@@ -53,52 +60,40 @@ export class EmployeeService{
     return this.http.put<Employee>(`${baseUrl}/${id}`, params).pipe(
       map(employee => {
         this.employeeSubject.next(employee);
+        this.alertService.success('Employee updated successfully', { autoClose: false });
         return employee;
+      }),
+      catchError(error => {
+        return this.handleError(error);
       })
     );
   }
 
   delete(id: string) {
     return this.http.delete(`${baseUrl}/${id}`).pipe(
-      finalize(() => {
-        if (this.employeeValue?.id === id) {
-          this.employeeSubject.next(null);
-        }
+      map(() => {
+        this.alertService.success('Employee deleted successfully', { autoClose: false });
+        return true;
+      }),
+      catchError(error => {
+        return this.handleError(error);
       })
     );
   }
 
   transferDepartment(employeeId: string, newDepartmentId: string) {
-    console.log('Transfer request:', { employeeId, newDepartmentId });
-    
-    // Create a simple update object with just the department ID
     const updateData = {
       departmentId: newDepartmentId
     };
     
-    console.log('Update data:', updateData);
-    
     return this.http.patch<Employee>(`${baseUrl}/${employeeId}`, updateData).pipe(
       map(employee => {
-        console.log('Transfer successful:', employee);
         this.employeeSubject.next(employee);
-        this.alertService.success('Employee successfully transferred to new department', { keepAfterRouteChange: true });
+        this.alertService.success('Employee successfully transferred to new department', { autoClose: false });
         return employee;
       }),
       catchError(error => {
-        console.error('Transfer error details:', error);
-        if (error.status === 404) {
-          throw new Error('Employee not found');
-        } else if (error.status === 400) {
-          throw new Error('Invalid department ID');
-        } else if (error.status === 401) {
-          throw new Error('Unauthorized - Please log in again');
-        } else if (error.status === 403) {
-          throw new Error('Access denied - Admin privileges required');
-        } else {
-          console.error('Full error object:', error);
-          throw new Error(error.error?.message || 'Failed to transfer employee. Please try again.');
-        }
+        return this.handleError(error);
       })
     );
   }

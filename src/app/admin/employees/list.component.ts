@@ -49,8 +49,9 @@ export class ListComponent implements OnInit {
       .pipe(first())
       .subscribe({
         next: () => {
+          this.employees = this.employees.filter(x => x.id !== id);
           this.alertService.success('Employee deleted successfully');
-          this.loadEmployees(); // Refresh the list from the backend
+          this.isDeleting = false;
         },
         error: error => {
           this.alertService.error(error?.message || 'Error deleting employee');
