@@ -26,6 +26,9 @@ export class AccountService {
         this.account = this.accountSubject.asObservable();
         this.loadingSubject = new BehaviorSubject<boolean>(false);
         this.loading = this.loadingSubject.asObservable();
+        
+        // Initialize loading state
+        this.loadingSubject.next(false);
     }
 
     public get accountValue(): Account | null {
@@ -44,12 +47,30 @@ export class AccountService {
         .pipe(
             map(account => {
                 console.log('Login successful:', account);
-                this.accountSubject.next(account);
-                this.startRefreshTokenTimer();
-                return account;
+                if (account && account.jwtToken) {
+                    this.accountSubject.next(account);
+                    this.startRefreshTokenTimer();
+                    return account;
+                } else {
+                    throw new Error('Invalid response from server');
+                }
             }),
-            catchError(this.handleError),
-            finalize(() => this.loadingSubject.next(false))
+            catchError(error => {
+                console.error('Login error:', error);
+                if (error instanceof HttpErrorResponse) {
+                    if (error.status === 401) {
+                        return throwError(() => 'Invalid email or password');
+                    }
+                    if (error.status === 0) {
+                        return throwError(() => 'Unable to connect to the server. Please check your internet connection.');
+                    }
+                }
+                return throwError(() => error.error?.message || 'An error occurred during login');
+            }),
+            finalize(() => {
+                console.log('Login request completed');
+                this.loadingSubject.next(false);
+            })
         );
     }
 
@@ -58,8 +79,12 @@ export class AccountService {
         console.log('Logging out...');
         this.http.post<any>(`${baseUrl}/revoke-token`, {}, { withCredentials: true })
             .pipe(
-                catchError(this.handleError),
+                catchError(error => {
+                    console.error('Logout error:', error);
+                    return this.handleError(error);
+                }),
                 finalize(() => {
+                    console.log('Logout completed');
                     this.loadingSubject.next(false);
                     this.stopRefreshTokenTimer();
                     this.accountSubject.next(null);
@@ -76,12 +101,23 @@ export class AccountService {
             .pipe(
                 map((account) => {
                     console.log('Token refresh successful:', account);
-                    this.accountSubject.next(account);
-                    this.startRefreshTokenTimer();
-                    return account;
+                    if (account && account.jwtToken) {
+                        this.accountSubject.next(account);
+                        this.startRefreshTokenTimer();
+                        return account;
+                    } else {
+                        throw new Error('Invalid response from server');
+                    }
                 }),
-                catchError(this.handleError),
-                finalize(() => this.loadingSubject.next(false))
+                catchError(error => {
+                    console.error('Token refresh error:', error);
+                    this.accountSubject.next(null);
+                    return this.handleError(error);
+                }),
+                finalize(() => {
+                    console.log('Token refresh completed');
+                    this.loadingSubject.next(false);
+                })
             );            
     }
 
@@ -94,7 +130,7 @@ export class AccountService {
             errorMessage = error.error.message;
         } else {
             // Server-side error
-            errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
+            errorMessage = error.error?.message || `Error Code: ${error.status}\nMessage: ${error.message}`;
         }
         
         console.error('Error details:', {
@@ -104,7 +140,7 @@ export class AccountService {
             message: errorMessage
         });
         
-        return throwError(() => error);
+        return throwError(() => errorMessage);
     }
 
     register(account: Account) {
