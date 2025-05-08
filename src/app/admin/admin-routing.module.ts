@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { LayoutComponent } from './layout.component';
 import { OverviewComponent } from './overview.component';
+import { EmployeeTransferComponent } from './employee-transfer/employee-transfer.component';
 
 const accountsModule = () => import('./accounts/accounts.module').then(x => x.AccountsModule);
 const employeesModule = () => import('./employees/employees.module').then(x => x.EmployeesModule);
@@ -18,7 +19,8 @@ const routes: Routes = [
             { path: 'employees', loadChildren: employeesModule },
             { path: 'departments', loadChildren: departmentsModule },
             { path: 'workflows', loadChildren: workflowsModule },
-            { path: 'requests', loadChildren: requestsModule }
+            { path: 'requests', loadChildren: requestsModule },
+            { path: 'employee-transfer', component: EmployeeTransferComponent }
         ]
     }
 ];

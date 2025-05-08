@@ -1,0 +1,61 @@
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h2>Employee Department Transfer</h2>
+            <form [formGroup]="form" (ngSubmit)="onSubmit()">
+                <div class="form-group">
+                    <label for="employeeId">Employee</label>
+                    <select
+                        formControlName="employeeId"
+                        class="form-control"
+                        [ngClass]="{ 'is-invalid': submitted && f.employeeId.errors }">
+                        <option value="">Select Employee</option>
+                        <option *ngFor="let employee of employees" [value]="employee.id">
+                            {{employee.employeeId}} - {{employee.account?.firstName}} {{employee.account?.lastName}}
+                        </option>
+                    </select>
+                    <div *ngIf="submitted && f.employeeId.errors" class="invalid-feedback">
+                        <div *ngIf="f.employeeId.errors.required">Employee is required</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="departmentId">Department</label>
+                    <select
+                        formControlName="departmentId"
+                        class="form-control"
+                        [ngClass]="{ 'is-invalid': submitted && f.departmentId.errors }">
+                        <option value="">Select Department</option>
+                        <option *ngFor="let department of departments" [value]="department.id">
+                            {{department.name}}
+                        </option>
+                    </select>
+                    <div *ngIf="submitted && f.departmentId.errors" class="invalid-feedback">
+                        <div *ngIf="f.departmentId.errors.required">Department is required</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="reason">Transfer Reason</label>
+                    <textarea
+                        formControlName="reason"
+                        class="form-control"
+                        [ngClass]="{ 'is-invalid': submitted && f.reason.errors }"
+                        rows="3"
+                        placeholder="Enter reason for transfer"></textarea>
+                    <div *ngIf="submitted && f.reason.errors" class="invalid-feedback">
+                        <div *ngIf="f.reason.errors.required">Reason is required</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <button [disabled]="loading" class="btn btn-primary">
+                        <span *ngIf="loading" class="spinner-border spinner-border-sm mr-1"></span>
+                        Transfer Employee
+                    </button>
+                    <a routerLink="../" class="btn btn-link">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div> 

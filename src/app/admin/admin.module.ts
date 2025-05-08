@@ -6,6 +6,7 @@ import { AdminRoutingModule } from './admin-routing.module';
 import { SubNavComponent } from './subnav.component';
 import { LayoutComponent } from './layout.component';
 import { OverviewComponent } from './overview.component';
+import { EmployeeTransferComponent } from './employee-transfer/employee-transfer.component';
 
 @NgModule({
     imports: [
@@ -16,7 +17,8 @@ import { OverviewComponent } from './overview.component';
     declarations: [
         SubNavComponent,
         LayoutComponent,
-        OverviewComponent
+        OverviewComponent,
+        EmployeeTransferComponent
     ]
 })
 export class AdminModule { }

@@ -10,6 +10,8 @@ import { Employee } from '@app/_models';
 export class ListComponent implements OnInit {
   employees: Employee[] = [];
   isDeleting = false;
+  showTransferModal = false;
+  selectedEmployee: Employee;
 
   constructor(
     private router: Router,
@@ -31,6 +33,7 @@ export class ListComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error loading employees:', error); // Debug log
+          this.alertService.error('Error loading employees');
         }
       });
   }
@@ -48,9 +51,28 @@ export class ListComponent implements OnInit {
           this.alertService.success('Employee deleted successfully');
         },
         error: error => {
-          this.alertService.error(error);
+          this.alertService.error(error?.message || 'Error deleting employee');
           this.isDeleting = false;
         }
       });
+  }
+
+  openTransferModal(employee: Employee) {
+    if (!employee || !employee.id) {
+      this.alertService.error('Invalid employee data');
+      return;
+    }
+    this.selectedEmployee = { ...employee }; // Create a copy of the employee object
+    this.showTransferModal = true;
+  }
+
+  closeTransferModal() {
+    this.showTransferModal = false;
+    this.selectedEmployee = null;
+  }
+
+  onTransferComplete() {
+    this.loadEmployees(); // Reload the list to show updated department
+    this.closeTransferModal();
   }
 } 
