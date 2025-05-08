@@ -1,12 +1,38 @@
 import { Employee } from '@app/_models';
+import { WorkflowType, WorkflowStatus } from './workflow-type.enum';
 
-export class Workflow {
+export interface Workflow {
     id: string;
-    type: string;        // Type of workflow (e.g., Leave Request, Overtime, etc.)
-    details: string;     // Detailed description of the workflow
-    status: string;      // Status (Pending, Approved, Rejected, etc.)
-    employeeId: string;  // Reference to the employee
+    type: WorkflowType;
+    details: string;
+    status: WorkflowStatus;
+    employeeId: string;
     dateCreated: string;
     dateUpdated: string;
-    employee?: Employee; // Optional employee details
+    employee?: Employee;
+    comments?: WorkflowComment[];
+    attachments?: WorkflowAttachment[];
+    approverId?: string;
+    approverName?: string;
+    approvalDate?: string;
+    rejectionReason?: string;
+}
+
+export interface WorkflowComment {
+    id: string;
+    workflowId: string;
+    userId: string;
+    userName: string;
+    comment: string;
+    dateCreated: string;
+}
+
+export interface WorkflowAttachment {
+    id: string;
+    workflowId: string;
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+    uploadDate: string;
+    uploadedBy: string;
 } 

@@ -91,7 +91,7 @@ export class FakeBackendInterceptor implements HttpInterceptor {
                 case url.match(/\/api\/workflows\/\d+$/) && method === 'GET':
                     const workflowUrlParts = url.split('/');
                     const workflowId = workflowUrlParts[workflowUrlParts.length - 1];
-                    const workflow = workflows.find(x => x.id === workflowId);
+                    const workflow = workflows.find(x => x.id.toString() === workflowId);
                     if (workflow) {
                         return ok(workflow);
                     } else {
@@ -99,6 +99,11 @@ export class FakeBackendInterceptor implements HttpInterceptor {
                     }
                 case url.endsWith('/api/workflows') && method === 'GET':
                     return ok(workflows);
+                case url.match(/\/api\/workflows\/employee\/\d+$/) && method === 'GET':
+                    const employeeUrlParts = url.split('/');
+                    const employeeId = employeeUrlParts[employeeUrlParts.length - 1];
+                    const employeeWorkflows = workflows.filter(x => x.employeeId.toString() === employeeId);
+                    return ok(employeeWorkflows);
                 case url.endsWith('/api/workflows') && method === 'POST':
                     const newWorkflow = body;
                     newWorkflow.id = workflows.length ? Math.max(...workflows.map(x => parseInt(x.id))) + 1 : 1;
@@ -111,7 +116,7 @@ export class FakeBackendInterceptor implements HttpInterceptor {
                     const updateUrlParts = url.split('/');
                     const updateId = updateUrlParts[updateUrlParts.length - 1];
                     const params = body;
-                    const workflowToUpdate = workflows.find(x => x.id === updateId);
+                    const workflowToUpdate = workflows.find(x => x.id.toString() === updateId);
                     if (!workflowToUpdate) {
                         return error('Workflow not found');
                     }
@@ -122,11 +127,11 @@ export class FakeBackendInterceptor implements HttpInterceptor {
                 case url.match(/\/api\/workflows\/\d+$/) && method === 'DELETE':
                     const deleteUrlParts = url.split('/');
                     const deleteId = deleteUrlParts[deleteUrlParts.length - 1];
-                    const workflowToDelete = workflows.find(x => x.id === deleteId);
+                    const workflowToDelete = workflows.find(x => x.id.toString() === deleteId);
                     if (!workflowToDelete) {
                         return error('Workflow not found');
                     }
-                    workflows = workflows.filter(x => x.id !== deleteId);
+                    workflows = workflows.filter(x => x.id.toString() !== deleteId);
                     localStorage.setItem(workflowsKey, JSON.stringify(workflows));
                     return ok();
                 default:

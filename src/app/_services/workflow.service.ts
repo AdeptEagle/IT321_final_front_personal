@@ -6,33 +6,87 @@ import { map } from 'rxjs/operators';
 import { environment } from '@environments/environment';
 import { Workflow } from '@app/_models/workflow';
 
-const baseUrl = `${environment.apiUrl}/api/workflows`;
-
 @Injectable({ providedIn: 'root' })
 export class WorkflowService {
+    private baseUrl = `${environment.apiUrl}/api/workflows`;
+
     constructor(private http: HttpClient) { }
 
-    getAll() {
-        return this.http.get<Workflow[]>(baseUrl);
+    getAll(): Observable<Workflow[]> {
+        return this.http.get<Workflow[]>(this.baseUrl)
+            .pipe(
+                map(response => this.mapWorkflows(response))
+            );
     }
 
-    getByEmployeeId(employeeId: string) {
-        return this.http.get<Workflow[]>(`${baseUrl}/employee/${employeeId}`);
+    getByEmployeeId(employeeId: string): Observable<Workflow[]> {
+        return this.http.get<Workflow[]>(`${this.baseUrl}/employee/${employeeId}`)
+            .pipe(
+                map(response => this.mapWorkflows(response))
+            );
     }
 
-    getById(id: string) {
-        return this.http.get<Workflow>(`${baseUrl}/${id}`);
+    getById(id: string): Observable<Workflow> {
+        return this.http.get<Workflow>(`${this.baseUrl}/${id}`)
+            .pipe(
+                map(response => this.mapWorkflow(response))
+            );
     }
 
-    create(params: any) {
-        return this.http.post<Workflow>(baseUrl, params);
+    create(params: any): Observable<Workflow> {
+        return this.http.post<Workflow>(this.baseUrl, params)
+            .pipe(
+                map(response => this.mapWorkflow(response))
+            );
     }
 
-    update(id: string, params: any) {
-        return this.http.put<Workflow>(`${baseUrl}/${id}`, params);
+    update(id: string, params: any): Observable<Workflow> {
+        return this.http.put<Workflow>(`${this.baseUrl}/${id}`, params)
+            .pipe(
+                map(response => this.mapWorkflow(response))
+            );
     }
 
-    delete(id: string) {
-        return this.http.delete(`${baseUrl}/${id}`);
+    delete(id: string): Observable<void> {
+        return this.http.delete<void>(`${this.baseUrl}/${id}`);
+    }
+
+    // Helper methods to ensure consistent data structure
+    private mapWorkflows(workflows: any[]): Workflow[] {
+        return workflows.map(w => this.mapWorkflow(w));
+    }
+
+    private mapWorkflow(workflow: any): Workflow {
+        return {
+            id: workflow.id?.toString(),
+            type: workflow.type,
+            details: workflow.details,
+            status: workflow.status,
+            employeeId: workflow.employeeId?.toString(),
+            dateCreated: workflow.dateCreated,
+            dateUpdated: workflow.dateUpdated,
+            employee: workflow.employee,
+            comments: workflow.comments?.map(c => ({
+                id: c.id?.toString(),
+                workflowId: c.workflowId?.toString(),
+                userId: c.userId?.toString(),
+                userName: c.userName,
+                comment: c.comment,
+                dateCreated: c.dateCreated
+            })),
+            attachments: workflow.attachments?.map(a => ({
+                id: a.id?.toString(),
+                workflowId: a.workflowId?.toString(),
+                fileName: a.fileName,
+                fileType: a.fileType,
+                fileSize: a.fileSize,
+                uploadDate: a.uploadDate,
+                uploadedBy: a.uploadedBy
+            })),
+            approverId: workflow.approverId?.toString(),
+            approverName: workflow.approverName,
+            approvalDate: workflow.approvalDate,
+            rejectionReason: workflow.rejectionReason
+        };
     }
 } 

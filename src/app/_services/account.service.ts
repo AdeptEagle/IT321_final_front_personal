@@ -28,12 +28,21 @@ export class AccountService {
     }
 
     login(email: string, password: string) {
-        return this.http.post<any>(`${baseUrl}/authenticate`, { email, password }, { withCredentials: true })
-            .pipe(map(account => {
+        console.log('Attempting login with:', { email });
+        return this.http.post<any>(`${baseUrl}/authenticate`, { email, password }, { 
+            withCredentials: true,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .pipe(
+            map(account => {
+                console.log('Login successful:', account);
                 this.accountSubject.next(account);
                 this.startRefreshTokenTimer();
                 return account;
-            }));
+            })
+        );
     }
 
     logout() {

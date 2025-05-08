@@ -28,7 +28,7 @@
             <td>
                 <div style="display: flex; gap: .5em; justify-content: flex-start; white-space: nowrap">
                     <a routerLink="" class="btn btn-sm btn-secondary">Request</a>
-                    <a routerLink="" class="btn btn-sm btn-success">Workflow</a>
+                    <button (click)="openWorkflowModal(employee)" class="btn btn-sm btn-success">Workflow</button>
                     <button (click)="openTransferModal(employee)" class="btn btn-sm btn-info">Transfer</button>
                     <a [routerLink]="['edit', employee.id]" class="btn btn-sm btn-primary">
                         <i class="fas fa-pencil-alt me-1"></i>Edit
@@ -53,3 +53,9 @@
     (close)="closeTransferModal()"
     (transferComplete)="onTransferComplete()">
 </app-transfer-modal>
+
+<app-workflow-modal
+    *ngIf="showWorkflowModal && selectedEmployee"
+    [employeeId]="selectedEmployee.id"
+    (close)="closeWorkflowModal()">
+</app-workflow-modal>

@@ -12,6 +12,7 @@ export class ListComponent implements OnInit {
   isDeleting = false;
   showTransferModal = false;
   selectedEmployee: Employee;
+  showWorkflowModal = false;
 
   constructor(
     private router: Router,
@@ -75,5 +76,24 @@ export class ListComponent implements OnInit {
   onTransferComplete() {
     this.loadEmployees(); // Reload the list to show updated department
     this.closeTransferModal();
+  }
+
+  openWorkflowModal(employee: Employee) {
+    console.log('Opening workflow modal for employee:', employee); // Debug log
+    if (!employee || !employee.id) {
+      console.error('Invalid employee data:', employee); // Debug log
+      this.alertService.error('Invalid employee data');
+      return;
+    }
+    console.log('Setting selected employee:', employee); // Debug log
+    this.selectedEmployee = employee;
+    console.log('Setting showWorkflowModal to true'); // Debug log
+    this.showWorkflowModal = true;
+    console.log('Modal state:', { showWorkflowModal: this.showWorkflowModal, selectedEmployee: this.selectedEmployee }); // Debug log
+  }
+
+  closeWorkflowModal() {
+    this.showWorkflowModal = false;
+    this.selectedEmployee = null;
   }
 }
