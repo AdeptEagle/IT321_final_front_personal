@@ -2,7 +2,7 @@ services:
   - type: web
     name: angular-signup-verification
     env: static
-    buildCommand: npm install --legacy-peer-deps && npm run build -- --configuration production
+    buildCommand: npm install --legacy-peer-deps && ng build --configuration production
     staticPublishPath: dist/angular-signup-verification-boilerplate
     routes:
       - type: rewrite
