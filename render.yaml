@@ -5,7 +5,7 @@ services:
     nodeVersion: 18.17.0
     buildCommand: |
       npm install --legacy-peer-deps
-      ng serve --configuration=production
+      ng build --configuration=production
     staticPublishPath: dist/angular-signup-verification-boilerplate
     routes:
       - type: rewrite
