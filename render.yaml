@@ -5,8 +5,7 @@ services:
     nodeVersion: 18.17.0
     buildCommand: |
       npm install --legacy-peer-deps
-      npm install -g @angular/cli
-      ng build --configuration production --output-path=dist/angular-signup-verification-boilerplate
+      ./node_modules/.bin/ng build --configuration production --output-path=dist/angular-signup-verification-boilerplate
     staticPublishPath: dist/angular-signup-verification-boilerplate
     envVars:
       - key: NODE_ENV
