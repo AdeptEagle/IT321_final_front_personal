@@ -2,16 +2,11 @@ services:
   - type: web
     name: angular-signup-verification-boilerplate
     env: static
-    buildCommand: |
-      npm install -g @angular/cli
-      npm install --legacy-peer-deps
-      npm install @angular-devkit/build-angular --save-dev
-      npm install @angular/cli --save-dev
-      npx ng build --configuration production
+    buildCommand: npm install --legacy-peer-deps && npm run build
     staticPublishPath: dist/angular-signup-verification-boilerplate
     envVars:
       - key: NODE_VERSION
-        value: 20.11.1
+        value: 20.17.0
       - key: NPM_CONFIG_LEGACY_PEER_DEPS
         value: "true"
     routes:
